@@ -44,3 +44,4 @@ coverage/
 *.tmp
 *.temp
 backend/test_image.jpg
+.aider*
