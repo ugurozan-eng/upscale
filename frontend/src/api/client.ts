@@ -29,4 +29,8 @@ export const getCredits = async (): Promise<CreditsResponse> => {
   return response.data;
 };
 
+export const getDownloadUrl = (jobId: string): string => {
+  return `${API_BASE}/api/download/${jobId}`;
+};
+
 export default api;

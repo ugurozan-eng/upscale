@@ -3,7 +3,7 @@ import { Sparkles, Zap, Download, ArrowRight } from 'lucide-react';
 import FileUploader from '../components/FileUploader';
 import ProcessingAnimation from '../components/ProcessingAnimation';
 import BeforeAfterSlider from '../components/BeforeAfterSlider';
-import { uploadAndUpscale } from '../api/client';
+import { uploadAndUpscale, getDownloadUrl } from '../api/client';
 import type { UpscaleJob } from '../types';
 
 type ViewState = 'upload' | 'processing' | 'result' | 'error';
@@ -46,22 +46,16 @@ export default function Dashboard() {
     setInputPreview(null);
   }, []);
 
-  const handleDownload = useCallback(async () => {
-    if (!result?.output_url) return;
-    try {
-      const response = await fetch(result.output_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `upscaled-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Download failed:', err);
-    }
+  const handleDownload = useCallback(() => {
+    if (!result?.job_id) return;
+    // Use backend proxy to bypass CORS
+    const downloadUrl = getDownloadUrl(result.job_id);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `upscaled-${result.job_id}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }, [result]);
 
   return (

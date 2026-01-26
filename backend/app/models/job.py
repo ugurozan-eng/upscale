@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from enum import Enum
 from datetime import datetime
@@ -28,6 +28,8 @@ class UpscaleResponse(BaseModel):
 
 class UpscaleJob(BaseModel):
     """Database model for upscale jobs."""
+    model_config = ConfigDict(from_attributes=True)
+
     id: Optional[str] = None
     user_id: str
     status: JobStatus = JobStatus.PENDING
@@ -37,9 +39,6 @@ class UpscaleJob(BaseModel):
     created_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     error_message: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 
 class JobStatusResponse(BaseModel):

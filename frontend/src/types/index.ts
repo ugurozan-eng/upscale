@@ -22,3 +22,22 @@ export interface CreditsResponse {
   user_id: string;
   credits: number;
 }
+
+export interface HistoryItem {
+  id: string;
+  name: string;
+  model: string;
+  date: string;
+  thumbnail: string;
+  output_url?: string;
+}
+
+export interface ModelInfo {
+  name: string;
+  description: string;
+  credits: number;
+  speed: string;
+  badge?: string;
+}
+
+export type ViewState = 'dashboard' | 'processing' | 'result' | 'history';

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from functools import lru_cache
 import os
 from dotenv import load_dotenv
@@ -8,17 +9,19 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
     # Replicate
-    replicate_api_token: str
+    replicate_api_token: str = ""
 
     # Supabase
-    supabase_url: str
-    supabase_key: str
-    supabase_service_key: str
+    supabase_url: str = ""
+    supabase_key: str = ""
+    supabase_service_key: str = ""
 
     # DigitalOcean Spaces
-    do_spaces_key: str
-    do_spaces_secret: str
+    do_spaces_key: str = ""
+    do_spaces_secret: str = ""
     do_spaces_region: str = "fra1"
     do_spaces_bucket: str = "vibecoding-upscale-v1"
     do_spaces_endpoint: str = "https://fra1.digitaloceanspaces.com"
@@ -36,10 +39,6 @@ class Settings(BaseSettings):
 
     # Pricing
     credits_per_upscale: int = 1
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
 
     @property
     def do_spaces_cdn_url(self) -> str:
