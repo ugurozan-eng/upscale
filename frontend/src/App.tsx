@@ -90,7 +90,7 @@ export default function App() {
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showModelPreview, setShowModelPreview] = useState<string | null>(null);
-  const [resultData, setResultData] = useState<{ inputUrl: string; outputUrl: string } | null>(null);
+  const [resultData, setResultData] = useState<{ inputUrl: string; outputUrl: string; jobId?: string } | null>(null);
   const [error, setError] = useState<string>('');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -190,11 +190,11 @@ export default function App() {
           body: formData,
         });
 
-        if (!uploadResponse.ok) {
-          throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-        }
-
         const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(uploadData.detail || `Upload failed: ${uploadResponse.statusText}`);
+        }
         const jobId = uploadData.job_id;
         const inputUrl = uploadData.input_url;
 
@@ -219,7 +219,7 @@ export default function App() {
             completed = true;
             const outputUrl = jobData.output_url || inputUrl;
 
-            setResultData({ inputUrl, outputUrl });
+            setResultData({ inputUrl, outputUrl, jobId });
 
             // Save to history
             const newItem: HistoryItem = {
@@ -251,23 +251,23 @@ export default function App() {
     }
   };
 
-  const handleDownload = async () => {
-    if (!resultData?.outputUrl) return;
+  const handleDownload = () => {
+    if (!resultData) return;
 
-    try {
-      const response = await fetch(resultData.outputUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `upscaled-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch {
-      setError('Failed to download image');
+    let url: string;
+    if (resultData.jobId) {
+      // Use backend proxy (bypasses CORS)
+      url = `${API_BASE_URL}/api/download/${resultData.jobId}`;
+    } else if (resultData.outputUrl) {
+      // Fallback to direct URL
+      url = resultData.outputUrl;
+    } else {
+      setError('No download URL available');
+      return;
     }
+
+    // Navigate browser directly - no fetch/CORS needed
+    window.location.href = url;
   };
 
   const handleSliderMove = (e: React.MouseEvent) => {

@@ -6,6 +6,10 @@ from app.config import settings
 import io
 import time
 import base64
+from PIL import Image
+
+# Max pixels for Replicate GPU (approx 1400x1400)
+MAX_PIXELS = 1800000
 
 router = APIRouter(prefix="/api", tags=["upscale"])
 
@@ -66,6 +70,31 @@ async def test_upload(file: UploadFile = File(...)):
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+
+    # Resize image if too large for Replicate GPU
+    try:
+        img = Image.open(io.BytesIO(contents))
+        width, height = img.size
+        total_pixels = width * height
+        print(f"Original image: {width}x{height} = {total_pixels} pixels")
+
+        if total_pixels > MAX_PIXELS:
+            # Calculate new dimensions while maintaining aspect ratio
+            ratio = (MAX_PIXELS / total_pixels) ** 0.5
+            new_width = int(width * ratio)
+            new_height = int(height * ratio)
+            print(f"Resizing to: {new_width}x{new_height}")
+
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+            # Save resized image to bytes
+            buffer = io.BytesIO()
+            img_format = 'JPEG' if file.content_type == 'image/jpeg' else 'PNG'
+            img.save(buffer, format=img_format, quality=95)
+            contents = buffer.getvalue()
+            print(f"Resized image size: {len(contents)} bytes")
+    except Exception as e:
+        print(f"Image resize failed (continuing with original): {e}")
 
     # Get services
     storage = get_storage_service()
