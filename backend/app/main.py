@@ -16,6 +16,8 @@ app.add_middleware(
         settings.frontend_url,
         "http://localhost:5173",
         "http://localhost:3000",
+        "https://frontend-three-nu-90.vercel.app",
+        "https://frontend-gdl9le36b-ugurs-projects-9b16cbd3.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
