@@ -56,11 +56,33 @@ def get_db_functions():
 
 
 @router.post("/test/upload", response_model=UpscaleResponse)
-async def test_upload(file: UploadFile = File(...)):
+async def test_upload(
+    file: UploadFile = File(...),
+    model: str = "real-esrgan",
+    scale: int = 4
+):
     """
     Upload and upscale an image using Replicate API.
+
+    Args:
+        file: Image file to upscale
+        model: Model to use - "real-esrgan" or "recraft-crisp"
+        scale: Upscale factor (2-10 for real-esrgan, 4 for recraft-crisp)
     """
     user_id = TEST_USER_ID
+
+    # Validate model
+    valid_models = ["real-esrgan", "recraft-crisp"]
+    if model not in valid_models:
+        model = "real-esrgan"
+
+    # Validate scale
+    if model == "recraft-crisp":
+        scale = 4  # recraft only supports 4x
+    else:
+        scale = max(2, min(10, scale))  # real-esrgan: 2-10
+
+    print(f"Using model: {model}, scale: {scale}")
 
     # Validate file type
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -137,7 +159,7 @@ async def test_upload(file: UploadFile = File(...)):
                 "user_id": user_id,
                 "status": JobStatus.PROCESSING.value,
                 "input_image_url": input_url,
-                "model_key": "real-esrgan",
+                "model_key": model,
                 "credits_used": settings.credits_per_upscale,
             }
             job = create_job(job_data)
@@ -146,16 +168,16 @@ async def test_upload(file: UploadFile = File(...)):
         except Exception as e:
             print(f"Job creation failed: {e}")
 
-    # Run Replicate upscale with Real-ESRGAN (4x scale, face enhance)
+    # Run Replicate upscale
     output_url = input_url  # Fallback
     if replicate:
         try:
-            print(f"Calling Replicate API with Real-ESRGAN...")
+            print(f"Calling Replicate API with {model} (scale={scale})...")
             output_url = replicate.run_upscale_sync(
                 image_url=input_url,
-                model_key="real-esrgan",
-                scale=4,
-                face_enhance=True
+                model_key=model,
+                scale=scale,
+                face_enhance=(model == "real-esrgan")  # Face enhance only for real-esrgan
             )
             print(f"Replicate returned: {output_url}")
 

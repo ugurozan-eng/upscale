@@ -34,6 +34,13 @@ interface HistoryItem {
   outputUrl?: string;
 }
 
+// Map frontend model keys to backend model keys and scale
+const modelMapping: Record<string, { backendModel: string; scale: number }> = {
+  'recraft-crisp-4x': { backendModel: 'recraft-crisp', scale: 4 },
+  'real-esrgan-4x': { backendModel: 'real-esrgan', scale: 4 },
+  'real-esrgan-10x': { backendModel: 'real-esrgan', scale: 10 },
+};
+
 const models: Record<string, Model> = {
   'recraft-crisp-4x': {
     name: 'Recraft Crisp 4x',
@@ -49,23 +56,23 @@ const models: Record<string, Model> = {
     },
     features: ['Best for faces', 'Sharp details', 'Natural colors']
   },
-  'recraft-crisp-8x': {
-    name: 'Recraft Crisp 8x',
-    description: 'Ultra-high resolution upscaling',
-    credits: 10,
-    scale: '8x',
-    speed: '~8 seconds',
+  'real-esrgan-4x': {
+    name: 'RealESRGAN 4x',
+    description: 'Fast general purpose upscaling',
+    credits: 3,
+    scale: '4x',
+    speed: '~3 seconds',
     available: true,
-    badge: '🚀 Ultra HD',
+    badge: '⚡ Fast',
     showcase: {
-      before: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=50',
-      after: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=95'
+      before: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=50',
+      after: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=95'
     },
-    features: ['Maximum quality', 'Print ready', 'Huge resolution']
+    features: ['Face enhance', 'Quick results', 'Good quality']
   },
   'real-esrgan-10x': {
     name: 'RealESRGAN 10x',
-    description: 'General purpose super resolution',
+    description: 'Maximum resolution upscaling',
     credits: 8,
     scale: '10x',
     speed: '~6 seconds',
@@ -75,7 +82,7 @@ const models: Record<string, Model> = {
       before: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=50',
       after: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=95'
     },
-    features: ['10x scale', 'Versatile', 'Fast processing']
+    features: ['10x scale', 'Face enhance', 'Best for small images']
   }
 };
 
@@ -183,12 +190,19 @@ export default function App() {
         const formData = new FormData();
         formData.append('file', uploadedFile.file);
 
+        // Get backend model and scale from mapping
+        const mapping = modelMapping[selectedModel] || { backendModel: 'real-esrgan', scale: 4 };
+        const { backendModel, scale } = mapping;
+
         setProcessingProgress(10);
 
-        const uploadResponse = await fetch(`${API_BASE_URL}/api/test/upload`, {
-          method: 'POST',
-          body: formData,
-        });
+        const uploadResponse = await fetch(
+          `${API_BASE_URL}/api/test/upload?model=${backendModel}&scale=${scale}`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
 
         const uploadData = await uploadResponse.json();
 
