@@ -2,16 +2,16 @@ services:
   - type: web
     name: upscale-backend
     env: python
+    region: frankfurt
     buildCommand: pip install -r backend/requirements.txt
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.2
     plan: starter
-    branch: main
+    branch: frontend-dev
     numInstances: 1
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
       - key: APP_ENV
         value: production
